@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Futuristic Secret Mission</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* General body styling */
+body {
+    margin: 0;
+    font-family: 'Orbitron', sans-serif;
+    background: #000;
+    color: #0ff;
+    overflow-y: auto; /* Enable vertical scroll */
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* Grid background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(#0ff 1px, transparent 1px) 0 0,
+        linear-gradient(90deg, #0ff 1px, transparent 1px) 0 0;
+    background-size: 50px 50px;
+    opacity: 0.04;
+    z-index: 0;
+}
+
+/* Floating particles */
+.particle {
+    position: fixed;
+    width: 3px; height: 3px;
+    background: #0ff;
+    border-radius: 50%;
+    animation: float 8s linear infinite;
+    opacity: 0.7;
+}
+@keyframes float {
+    from { transform: translateY(100vh) scale(0.5); opacity: 0.2; }
+    to { transform: translateY(-10vh) scale(1.2); opacity: 1; }
+}
+
+/* Scanline */
+.scanline {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 4px;
+    background: rgba(0,255,255,0.2);
+    animation: scan 6s linear infinite;
+}
+@keyframes scan {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+
+/* Header */
+header {
+    position: relative;
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 2rem;
+    text-shadow: 0 0 12px #0ff, 0 0 25px #0ff;
+    animation: glitch 2s infinite;
+    z-index: 10;
+}
+@keyframes glitch {
+    0% { text-shadow: 2px 2px #f0f, -2px -2px #0ff; }
+    20% { text-shadow: -2px 2px #ff0, 2px -2px #0ff; }
+    40% { text-shadow: 2px -2px #0ff, -2px 2px #f0f; }
+    60% { text-shadow: 0 0 12px #0ff, 0 0 25px #0ff; }
+    80% { text-shadow: -2px -2px #ff0, 2px 2px #0ff; }
+    100% { text-shadow: 0 0 12px #0ff, 0 0 25px #0ff; }
+}
+
+/* HUD */
+.hud {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 500px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 0;
+}
+.radar {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: conic-gradient(rgba(0,255,255,0.2) 0deg, transparent 90deg);
+    border-radius: 50%;
+    animation: sweep 6s linear infinite;
+}
+@keyframes sweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.hud .arc {
+    position: absolute;
+    top: 50%; left: 50%;
+    border-radius: 50%;
+    border: 2px solid #0ff;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    transform: translate(-50%, -50%);
+}
+.arc1 { width: 200px; height: 200px; animation: rotate 7s linear infinite; }
+.arc2 { width: 280px; height: 280px; animation: rotate 10s linear infinite reverse; }
+.arc3 { width: 360px; height: 360px; animation: rotate 13s linear infinite; }
+.dot {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 14px; height: 14px;
+    background: #0ff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px #0ff, 0 0 40px #0ff inset;
+    animation: pulse 1.2s infinite alternate;
+}
+@keyframes rotate {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+}
+
+/* Panel */
+.panel {
+    position: relative;
+    border: 1px solid #0ff;
+    border-radius: 15px;
+    padding: 1rem;
+    margin: 5rem auto;
+    width: 80%;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    background: rgba(0,0,0,0.6);
+    box-shadow: 0 0 30px #0ff inset, 0 0 50px #0ff;
+    z-index: 2;
+}
+
+/* Cards */
+.card {
+    border: 1px solid #0ff;
+    padding: 1.5rem;
+    border-radius: 15px;
+    background: rgba(0,0,0,0.7);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 15px #0ff;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid #0ff;
+    border-radius: 15px;
+    opacity: 0.3;
+    animation: borderGlow 2s linear infinite;
+}
+@keyframes borderGlow {
+    0% { box-shadow: 0 0 10px #0ff; }
+    50% { box-shadow: 0 0 25px #0ff; }
+    100% { box-shadow: 0 0 10px #0ff; }
+}
+.card:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 0 25px #0ff, 0 0 50px #0ff inset;
+}
+.card h2 { margin-bottom: 0.8rem; font-size: 1.4rem; color: #0ff; }
+.card p { font-size: 1rem; color: #0ff; opacity: 0.9; }
+
+/* Vault button */
+.vault-btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    margin-top: 0.8rem;
+    border: none;
+    border-radius: 12px;
+    background: rgba(0,255,255,0.1);
+    color: #0ff;
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.vault-btn:hover {
+    background: rgba(0,255,255,0.3);
+    transform: translateY(-3px);
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    opacity: 0.5;
+    z-index: 2;
+    color: #0ff;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    header { font-size: 1.6rem; }
+    .hud { width: 280px; height: 280px; }
+    .panel { margin-top: 1rem; padding: 0.5rem; }
+    .card h2 { font-size: 1.1rem; }
+    .card p { font-size: 0.9rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Scanline -->
+<div class="scanline"></div>
+
+<!-- Floating particles -->
+<div class="particle" style="left:10%; animation-delay:0s;"></div>
+<div class="particle" style="left:30%; animation-delay:2s;"></div>
+<div class="particle" style="left:50%; animation-delay:4s;"></div>
+<div class="particle" style="left:70%; animation-delay:6s;"></div>
+<div class="particle" style="left:90%; animation-delay:8s;"></div>
+
+<header>🛰️ SECRET MISSION CONTROL 🛰️</header>
+
+<!-- HUD -->
+<div class="hud">
+    <div class="radar"></div>
+    <div class="arc arc1"></div>
+    <div class="arc arc2"></div>
+    <div class="arc arc3"></div>
+    <div class="dot"></div>
+</div>
+
+<!-- Panel with cards -->
+<div class="panel">
+    <div class="card">
+        <h2>Mission Status</h2>
+        <p>Active 🔒</p>
+    </div>
+    <div class="card">
+        <h2>Secret Funds</h2>
+        <p>$1,234,567</p>
+    </div>
+    <div class="card">
+        <h2>Next Objective</h2>
+        <p>Infiltrate HQ at 0200 hours</p>
+    </div>
+    <div class="card">
+        <h2>Intel Reports</h2>
+        <p>Classified</p>
+    </div>
+    <div class="card">
+        <h2>🔐 Secret Vault</h2>
+        <p>Click below to access your secret vault.</p>
+        <a href="/secret-vault" class="vault-btn">Enter Vault</a>
+    </div>
+</div>
+
+<footer>&copy; 2025 Secret Agency - All operations classified</footer>
+</body>
+</html>
