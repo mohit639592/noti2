@@ -7,4 +7,11 @@ router.get("/",(req,res)=>{
     res.render("index");
 })
 
+router.get("/secret-vault-unlock",(req,res)=>{
+    res.render("secret")
+})
+
+router.get("/secret-vault",(req,res)=>{
+    res.render("vault")
+})
 module.exports = router;

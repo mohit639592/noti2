@@ -168,6 +168,7 @@ header {
     border-radius: 15px;
     opacity: 0.3;
     animation: borderGlow 2s linear infinite;
+    pointer-events: none;  /* ✅ Fix added */
 }
 @keyframes borderGlow {
     0% { box-shadow: 0 0 10px #0ff; }
@@ -194,6 +195,8 @@ header {
     font-size: 0.95rem;
     text-decoration: none;
     transition: 0.2s;
+    position: relative; 
+    z-index: 10;   /* ✅ Fix added */
 }
 .vault-btn:hover {
     background: rgba(0,255,255,0.3);
@@ -264,7 +267,7 @@ footer {
     <div class="card">
         <h2>🔐 Secret Vault</h2>
         <p>Click below to access your secret vault.</p>
-        <a href="/secret-vault" class="vault-btn">Enter Vault</a>
+        <a href="/secret-vault-unlock" class="vault-btn">Enter Vault</a>
     </div>
 </div>
 

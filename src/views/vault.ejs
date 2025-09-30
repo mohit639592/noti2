@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Futuristic Password Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --neon:#0ff;
+  --neon2:#00b3ff;
+  --bg:#000;
+  --glass:rgba(0,0,0,0.38);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Orbitron',sans-serif;
+  background:#000;
+  color:var(--neon);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:28px;
+}
+
+/* header */
+h1{ font-size:1.8rem; margin-bottom:12px; text-shadow:0 0 8px var(--neon) }
+
+/* container */
+.vault{
+  width:100%; max-width:960px;
+  background:linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.35));
+  border:1px solid rgba(0,255,225,0.06);
+  border-radius:14px; padding:16px; gap:12px;
+  box-shadow: 0 0 40px rgba(0,255,225,0.02) inset;
+}
+
+/* toolbar */
+.toolbar{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+.add-btn{
+  background:rgba(0,255,225,0.08); border:1px solid rgba(0,255,225,0.12);
+  color:var(--neon); padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700;
+}
+.sync-btn{ padding:8px 10px; border-radius:8px; cursor:pointer; background:transparent; color:var(--neon); border:1px solid rgba(0,255,225,0.04) }
+
+/* list */
+.password-list{ display:flex; flex-direction:column; gap:10px; padding:6px 0; }
+
+/* item */
+.pass-item{
+  background:var(--glass); border:1px solid rgba(0,255,225,0.06);
+  padding:12px; border-radius:10px; display:grid; grid-template-columns: 1fr 180px; gap:10px; align-items:center;
+}
+@media(max-width:760px){ .pass-item{ grid-template-columns: 1fr; } }
+.meta{ display:flex; flex-direction:column; gap:6px; }
+.row{ display:flex; gap:8px; align-items:center; }
+.label{ font-weight:700; color:var(--neon); }
+.small{ font-size:12px; color:rgba(0,255,225,0.6) }
+
+/* inputs */
+.field{ background:transparent; color:var(--neon); border:1px dashed rgba(0,255,225,0.04); padding:6px 8px; border-radius:6px; width:100% }
+.field:focus{ outline:none; border-color:rgba(0,255,225,0.14) }
+
+/* right controls */
+.controls{ display:flex; flex-direction:column; gap:8px; align-items:end; }
+.controls button{ padding:8px 10px; border-radius:8px; cursor:pointer; background:rgba(0,255,225,0.06); border:1px solid rgba(0,255,225,0.06); color:var(--neon) }
+.controls .save{ background:linear-gradient(90deg, rgba(0,255,225,0.12), rgba(0,150,255,0.08)); border:1px solid rgba(0,255,225,0.18); font-weight:700 }
+.controls .delete{ background:rgba(255,80,80,0.06); color:#ff7b7b; border:1px solid rgba(255,80,80,0.06) }
+
+/* empty state */
+.empty{ padding:28px; text-align:center; color:rgba(0,255,225,0.5) }
+
+/* tiny footer */
+.note{ margin-top:12px; font-size:12px; color:rgba(0,255,225,0.5) }
+</style>
+</head>
+<body>
+
+<h1>🔐 Futuristic Password Vault</h1>
+
+<div class="vault" id="vault">
+  <div class="toolbar">
+    <button class="add-btn" id="addBtn">➕ Add Password</button>
+    <button class="sync-btn" id="syncBtn">⟳ Sync (GET)</button>
+  </div>
+
+  <div class="password-list" id="passwordList">
+    <div class="empty" id="emptyMsg">No passwords yet — click <strong>➕ Add Password</strong></div>
+  </div>
+
+  <div class="note">
+    Tip: Each entry stores <strong>Label</strong> (what it's for), <strong>Username</strong>, <strong>Password</strong> and optional <strong>URL</strong>.<br>
+    Backend POST endpoint expected: <code>POST /api/passwords</code> with JSON <code>{ label, username, password, url }</code>.
+  </div>
+</div>
+
+<script>
+/* CONFIG */
+const BACKEND_URL = '/api/passwords'; // change if needed (e.g. https://mydomain.com/api/passwords)
+
+/* DOM */
+const addBtn = document.getElementById('addBtn');
+const syncBtn = document.getElementById('syncBtn');
+const passwordList = document.getElementById('passwordList');
+const emptyMsg = document.getElementById('emptyMsg');
+
+/* Helpers */
+function makeElem(tag, cls){ const e = document.createElement(tag); if(cls) e.className = cls; return e; }
+
+function renderItem(obj){
+  // obj can be { _id, label, username, password, url }
+  const item = makeElem('div','pass-item');
+  const meta = makeElem('div','meta');
+
+  const labelRow = makeElem('div','row');
+  const labelInp = makeElem('input','field');
+  labelInp.value = obj.label || '';
+  labelInp.placeholder = 'Label (e.g., Gmail, Bank)';
+  labelRow.appendChild(labelInp);
+
+  const userRow = makeElem('div','row');
+  const userInp = makeElem('input','field');
+  userInp.value = obj.username || '';
+  userInp.placeholder = 'Username / Email';
+  userRow.appendChild(userInp);
+
+  const urlRow = makeElem('div','row');
+  const urlInp = makeElem('input','field');
+  urlInp.value = obj.url || '';
+  urlInp.placeholder = 'URL (optional)';
+  urlRow.appendChild(urlInp);
+
+  meta.appendChild(labelRow);
+  meta.appendChild(userRow);
+  meta.appendChild(urlRow);
+
+  const right = makeElem('div','controls');
+
+  // password field with show/hide
+  const passInp = makeElem('input','field');
+  passInp.type = 'password';
+  passInp.value = obj.password || '';
+  passInp.placeholder = 'Password';
+  passInp.style.marginBottom = '6px';
+  passInp.style.width = '100%';
+
+  // small info (label & user condensed)
+  const info = makeElem('div');
+  info.innerHTML = `<div class="small">${(obj.label||'').slice(0,40)} ${obj.username? ' · ' + obj.username : ''}</div>`;
+
+  // buttons
+  const showBtn = makeElem('button');
+  showBtn.textContent = 'Show';
+  showBtn.onclick = ()=> {
+    if(passInp.type==='password'){ passInp.type='text'; showBtn.textContent='Hide'; }
+    else { passInp.type='password'; showBtn.textContent='Show'; }
+  };
+
+  const saveBtn = makeElem('button','save');
+  saveBtn.textContent = 'Save';
+  saveBtn.onclick = async ()=>{
+    const payload = {
+      label: labelInp.value.trim(),
+      username: userInp.value.trim(),
+      password: passInp.value,
+      url: urlInp.value.trim()
+    };
+    // Minimal validation
+    if(!payload.label || !payload.password){ alert('Label and password required'); return; }
+
+    try{
+      const res = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const j = await res.json();
+      if(j && j.success){
+        alert('Saved ✓');
+        // if backend returns created record, update local id
+        if(j.password && j.password._id) item.dataset.id = j.password._id;
+        loadPasswords(); // refresh list
+      } else {
+        alert('Save failed');
+      }
+    }catch(err){
+      console.error(err);
+      alert('Network error');
+    }
+  };
+
+  const delBtn = makeElem('button','delete');
+  delBtn.textContent = 'Delete';
+  delBtn.onclick = async ()=>{
+    if(!item.dataset.id){ item.remove(); checkEmpty(); return; }
+    if(!confirm('Delete this password?')) return;
+    try{
+      const res = await fetch(`${BACKEND_URL}/${item.dataset.id}`, { method:'DELETE' });
+      const j = await res.json();
+      if(j && j.success){ item.remove(); checkEmpty(); } else alert('Delete failed');
+    }catch(err){ console.error(err); alert('Network error'); }
+  };
+
+  right.appendChild(passInp);
+  right.appendChild(showBtn);
+  right.appendChild(saveBtn);
+  right.appendChild(delBtn);
+  right.appendChild(info);
+
+  item.appendChild(meta);
+  item.appendChild(right);
+
+  // attach id if exists
+  if(obj._id) item.dataset.id = obj._id;
+
+  return item;
+}
+
+function checkEmpty(){
+  const has = passwordList.querySelectorAll('.pass-item').length;
+  emptyMsg.style.display = has ? 'none' : 'block';
+}
+
+/* Add new blank entry */
+addBtn.addEventListener('click', ()=>{
+  const newObj = { label:'', username:'', password:'', url:'' };
+  const item = renderItem(newObj);
+  passwordList.prepend(item);
+  checkEmpty();
+});
+
+/* Sync / load from backend */
+syncBtn.addEventListener('click', loadPasswords);
+
+async function loadPasswords(){
+  try{
+    const res = await fetch(BACKEND_URL);
+    if(!res.ok){ console.warn('GET failed', res.status); return; }
+    const j = await res.json();
+    // clear existing
+    passwordList.querySelectorAll('.pass-item').forEach(n=>n.remove());
+    if(j && j.success && Array.isArray(j.passwords) && j.passwords.length){
+      j.passwords.forEach(p=>{
+        const it = renderItem(p);
+        passwordList.appendChild(it);
+      });
+    }
+    checkEmpty();
+  }catch(err){
+    console.error(err);
+    alert('Could not load passwords (network)');
+  }
+}
+
+/* initial load */
+loadPasswords();
+</script>
+
+</body>
+</html>
