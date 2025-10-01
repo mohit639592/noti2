@@ -1,10 +1,18 @@
 const mongoose = require("mongoose")
 const passSchema = new mongoose.Schema({
-    email:{
+    password:{
         type: String,
         require: true
     },
-    password:{
+    label:{
+        type: String,
+        required: true
+    },
+    username:{
+        type: String,
+        required: true
+    },
+    url:{
         type: String,
         required: true
     }
